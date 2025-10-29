@@ -7,6 +7,6 @@ export class TagController {
 
   @Get()
   getAllTags() {
-    return 'hello';
+    return 'hello world';
   }
 }
