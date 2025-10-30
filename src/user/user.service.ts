@@ -37,7 +37,7 @@ export class UserService {
   }
 
   // ✨ Créer un utilisateur
-  async create(createUserDto: CreateUserDto): Promise<UserEntity> {
+  async create(createUserDto: CreateUserDto): Promise<CreateUserDto> {
     const user = this.userRepository.create(createUserDto);
     return this.userRepository.save(user);
   }
