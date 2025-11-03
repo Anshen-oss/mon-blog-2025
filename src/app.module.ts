@@ -1,4 +1,5 @@
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -7,7 +8,15 @@ import { TagModule } from './tag/tag.module';
 import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(ormconfig), TagModule, UserModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true, // ⬅️ Rend les variables d'env disponibles partout
+      envFilePath: '.env', // ⬅️ Chemin vers le fichier .env
+    }),
+    TypeOrmModule.forRoot(ormconfig),
+    TagModule,
+    UserModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

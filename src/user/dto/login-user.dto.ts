@@ -6,13 +6,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-export class CreateUserDto {
-  @IsString()
-  @IsNotEmpty({ message: 'Username is required' })
-  @MinLength(3, { message: 'Username must be at least 3 characters' })
-  @MaxLength(30, { message: 'Username must not exceed 30 characters' })
-  username: string;
-
+export class LoginUserDto {
   @IsEmail({}, { message: 'Invalid email format' })
   @IsNotEmpty({ message: 'Email is required' })
   @MaxLength(255, { message: 'Email must not exceed 255 characters' })
