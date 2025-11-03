@@ -7,13 +7,14 @@ import {
 } from 'typeorm';
 
 import * as bcrypt from 'bcrypt';
+import { Exclude } from 'class-transformer';
 @Entity({ name: 'users' })
 export class UserEntity {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
   @Column('varchar')
-  name: string;
+  username: string;
 
   @Column()
   email: string;
@@ -24,7 +25,9 @@ export class UserEntity {
   @Column({ default: '' })
   image: string;
 
-  @Column()
+  // 🛡️ TRIPLE PROTECTION DU MOT DE PASSE
+  @Exclude() // ⬅️ Niveau 2: Exclure de la sérialisation JSON
+  @Column({ select: false }) // ⬅️ Niveau 1: Ne pas récupérer par défaut
   password: string;
 
   @BeforeInsert()
@@ -37,7 +40,19 @@ export class UserEntity {
   }
 
   @BeforeInsert()
+  @BeforeUpdate()
   normalizeEmail() {
-    this.email = this.email.toLowerCase().trim().replace(/\s+/g, '');
+    if (this.email) {
+      this.email = this.email.toLowerCase().trim();
+    }
+  }
+
+  // Optionnel : Normaliser le username
+  @BeforeInsert()
+  @BeforeUpdate()
+  normalizeUsername() {
+    if (this.username) {
+      this.username = this.username.trim();
+    }
   }
 }
