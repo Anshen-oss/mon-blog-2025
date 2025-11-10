@@ -1,3 +1,4 @@
+import { IsString } from 'class-validator';
 import {
   BeforeUpdate,
   Column,
@@ -26,7 +27,8 @@ export class ArticleEntity {
   description: string;
 
   @Column({ type: 'simple-array' })
-  tagList: string[];
+  @IsString({ each: true })
+  tagList?: string[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
@@ -38,7 +40,7 @@ export class ArticleEntity {
   favoritesCount: number;
 
   // 👤 Relation avec l'auteur
-  @ManyToOne(() => UserEntity, (user) => user.articles)
+  @ManyToOne(() => UserEntity, (user) => user.articles, { eager: true })
   author: UserEntity;
 
   @Column()

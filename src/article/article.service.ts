@@ -1,12 +1,12 @@
 import { UserEntity } from '@/user/user.entity';
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import slugify from 'slugify';
-import { Repository } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
+import { IArticleResponse } from './article-response.interface';
 import { ArticleEntity } from './article.entity';
 import { CreateArticleDto } from './dto/create-article.dto';
-import { IArticleResponse } from './article-response.interface';
-
+import { UpdateArticleDto } from './dto/update-article.dto';
 @Injectable()
 export class ArticleService {
   constructor(
@@ -37,6 +37,69 @@ export class ArticleService {
 
     // 6️⃣ Sauvegarder en base de données
     return await this.articleRepository.save(article);
+  }
+
+  async getSingleArticle(slug: string): Promise<ArticleEntity> {
+    const article = await this.articleRepository.findOne({
+      where: { slug },
+    });
+
+    if (!article) {
+      throw new HttpException('Article introuvable', HttpStatus.NOT_FOUND);
+    }
+    return article;
+  }
+
+  // ! Méthode Réutilisable : findBySlug
+  // Pour éviter la duplication de code
+
+  async findBySlug(slug: string): Promise<ArticleEntity> {
+    const article = await this.articleRepository.findOne({
+      where: { slug },
+    });
+
+    if (!article) {
+      throw new HttpException('Article introuvable', HttpStatus.NOT_FOUND);
+    }
+    return article;
+  }
+
+  async updateArticle(
+    slug: string,
+    currentUserId: number,
+    updateArticleDto: UpdateArticleDto,
+  ): Promise<ArticleEntity> {
+    // 1. Trouver l'article
+    const article = await this.findBySlug(slug);
+
+    // 2. Vérifier l'auteur de l'article
+    if (article.author.id !== currentUserId) {
+      throw new HttpException('You are not an author', HttpStatus.FORBIDDEN);
+    }
+
+    // 3. Régénérer le slug si le titre change
+    if (updateArticleDto.title) {
+      article.slug = this.generateSlug(updateArticleDto.title);
+    }
+    // 4. Copier les nouvelles propriétés
+    Object.assign(article, updateArticleDto);
+
+    // 5. Sauvegarder
+    return await this.articleRepository.save(article);
+  }
+
+  // Service de Suppression
+  async deleteArticle(
+    slug: string,
+    currentUserId: number,
+  ): Promise<DeleteResult> {
+    const article = this.findBySlug(slug);
+
+    // Vérification de l'auteur de l'article
+    if ((await article).author.id !== currentUserId) {
+      throw new HttpException('You are not an author', HttpStatus.FORBIDDEN);
+    }
+    return await this.articleRepository.delete({ slug });
   }
 
   private generateSlug(title: string): string {
