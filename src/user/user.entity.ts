@@ -3,11 +3,13 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 import * as bcrypt from 'bcrypt';
 import { Exclude } from 'class-transformer';
+import { ArticleEntity } from '../article/article.entity';
 @Entity({ name: 'users' })
 export class UserEntity {
   @PrimaryGeneratedColumn('increment')
@@ -29,6 +31,9 @@ export class UserEntity {
   @Exclude() // ⬅️ Niveau 2: Exclure de la sérialisation JSON
   @Column({ select: false }) // ⬅️ Niveau 1: Ne pas récupérer par défaut
   password: string;
+
+  @OneToMany(() => ArticleEntity, (article) => article.author)
+  articles: ArticleEntity[];
 
   @BeforeInsert()
   @BeforeUpdate()
