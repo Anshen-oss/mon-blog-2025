@@ -1,9 +1,11 @@
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
+  IsUrl,
   MaxLength,
-  MinLength,
+  MinLength
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -27,4 +29,15 @@ export class CreateUserDto {
   //   message: 'Password must contain uppercase, lowercase, and number/special character',
   // })
   password: string;
+
+  // ✅ AJOUT : Champs optionnels pour bio et image
+  @IsOptional()
+  @IsString()
+  @MaxLength(500, { message: 'Bio must not exceed 500 characters' })
+  bio?: string;
+
+  @IsOptional()
+  @IsUrl({}, { message: 'Image must be a valid URL' })
+  @MaxLength(500, { message: 'Image URL must not exceed 500 characters' })
+  image?: string;
 }
