@@ -161,4 +161,77 @@ export class ArticleService {
   generateArticleResponse(article: ArticleEntity): IArticleResponse {
     return { article };
   }
+
+  async addToFavoriteArticle(
+    currentUserId: number,
+    slug: string,
+  ): Promise<ArticleEntity> {
+    // 1️⃣ Récupérer l'utilisateur avec ses favoris
+    const user = await this.userRepository.findOne({
+      where: { id: currentUserId },
+      relations: ['favorites'],
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    // 2️⃣ Récupérer l'article
+    const article = await this.findBySlug(slug);
+    // 3️⃣ Vérifier si l'article n'est PAS déjà liké
+    const isNotFavorited =
+      user.favorites.findIndex(
+        (favoriteArticle) => favoriteArticle.slug === article.slug,
+      ) === -1;
+
+    // 4️⃣ Si pas encore liké, ajouter aux favoris
+    if (isNotFavorited) {
+      // Incrémenter le compteur de l'article
+      article.favoritesCount++;
+      // Ajouter l'article aux favoris de l'utilisateur
+      user.favorites.push(article);
+
+      // Sauvegarder les changements
+      await this.articleRepository.save(article);
+      await this.userRepository.save(user);
+    }
+    return article;
+  }
+
+  async removeArticleFromFavorites(
+    currentUserId: number,
+    slug: string,
+  ): Promise<ArticleEntity> {
+    // 1️⃣ Récupérer l'utilisateur avec ses favoris
+    const user = await this.userRepository.findOne({
+      where: { id: currentUserId },
+      relations: ['favorites'],
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    // 2️⃣ Récupérer l'article
+    const article = await this.findBySlug(slug);
+
+    // 3️⃣ Trouver l'index de l'article dans les favoris
+    const articleIndex = user.favorites.findIndex(
+      (favoriteArticle) => favoriteArticle.slug === article.slug,
+    );
+
+    // 4️⃣ Si l'article était liké, le retirer des favoris
+    if (articleIndex >= 0) {
+      // Retirer du tableau avec splice
+      user.favorites.splice(articleIndex, 1);
+
+      // Décrémenter le compteur
+      article.favoritesCount--;
+
+      // Sauvegarder les changements
+      await this.articleRepository.save(article);
+      await this.userRepository.save(user);
+    }
+    return article;
+  }
 }
