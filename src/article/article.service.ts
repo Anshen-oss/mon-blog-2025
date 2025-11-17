@@ -5,6 +5,7 @@ import slugify from 'slugify';
 import { DeleteResult, Repository } from 'typeorm';
 import { IArticleResponse } from './article-response.interface';
 import { ArticleEntity } from './article.entity';
+import { IArticlesResponse } from './articles-response.interface';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 @Injectable()
@@ -12,6 +13,8 @@ export class ArticleService {
   constructor(
     @InjectRepository(ArticleEntity)
     private readonly articleRepository: Repository<ArticleEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
   ) {}
 
   async createArticle(
@@ -100,6 +103,51 @@ export class ArticleService {
       throw new HttpException('You are not an author', HttpStatus.FORBIDDEN);
     }
     return await this.articleRepository.delete({ slug });
+  }
+
+  async findAll(query: any): Promise<IArticlesResponse> {
+    // 1️⃣ Créer le Query Builder
+    const queryBuilder = this.articleRepository
+      .createQueryBuilder('articles')
+      .leftJoinAndSelect('articles.author', 'author');
+
+    // 3️⃣ Appliquer les filtres
+    if (query.tag) {
+      queryBuilder.andWhere('articles.tagList LIKE :tag', {
+        tag: `%${query.tag}%`,
+      });
+    }
+
+    if (query.author) {
+      const author = await this.userRepository.findOne({
+        where: { username: query.author },
+      });
+
+      if (author) {
+        queryBuilder.andWhere('articles.author.id = :id', {
+          id: author?.id,
+        });
+      } else {
+        return { articles: [], articlesCount: 0 };
+      }
+    }
+
+    queryBuilder.orderBy('articles.createdAt', 'DESC');
+    // 2️⃣ Obtenir le compte AVANT les limites
+    const articlesCount = await queryBuilder.getCount();
+
+    // 4️⃣ Appliquer la pagination
+    if (query.limit) {
+      queryBuilder.limit(query.limit);
+    }
+
+    if (query.offset) {
+      queryBuilder.offset(query.offset);
+    }
+
+    const articles = await queryBuilder.getMany();
+
+    return { articles, articlesCount };
   }
 
   private generateSlug(title: string): string {

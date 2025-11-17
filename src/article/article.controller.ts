@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -15,6 +16,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { IArticleResponse } from './article-response.interface';
 import { ArticleService } from './article.service';
+import { IArticlesResponse } from './articles-response.interface';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 @Controller('articles')
@@ -34,6 +36,12 @@ export class ArticleController {
     );
 
     return this.articleService.generateArticleResponse(article);
+  }
+
+  // § Récupérer tous les articles
+  @Get()
+  async findAllArticles(@Query() query: any): Promise<IArticlesResponse> {
+    return await this.articleService.findAll(query);
   }
 
   // ! Récupération d'un Article Unique
