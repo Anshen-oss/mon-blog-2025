@@ -76,4 +76,29 @@ export class ArticleController {
 
     return this.articleService.generateArticleResponse(updatedArticle);
   }
+
+  @Post(':slug/favorite')
+  @UseGuards(AuthGuard('jwt'))
+  async addToFavorite(
+    @User('id') currentUserId: number,
+    @Param('slug') slug: string,
+  ): Promise<IArticleResponse> {
+    const favoriteArticle = await this.articleService.addToFavoriteArticle(
+      currentUserId,
+      slug,
+    );
+
+    return this.articleService.generateArticleResponse(favoriteArticle);
+  }
+
+  @Delete(':slug/favorite')
+  @UseGuards(AuthGuard('jwt'))
+  async removeFromFavorite(
+    @User('id') currentUserId: number,
+    @Param('slug') slug: string,
+  ): Promise<IArticleResponse> {
+    const unFavoritedArticle =
+      await this.articleService.removeArticleFromFavorites(currentUserId, slug);
+    return this.articleService.generateArticleResponse(unFavoritedArticle);
+  }
 }
